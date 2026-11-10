@@ -119,3 +119,28 @@ def exportar_csv(alunos, caminho):
         escritor.writerows(alunos)
 
 
+# ============================== Validação ==============================
+
+def limpar_texto(texto):
+    """Tira espaços das pontas e espaços repetidos no meio."""
+    return ' '.join(str(texto or '').split())
+
+
+def validar_dados(dados):
+    """Devolve a lista de erros encontrados (vazia se estiver tudo certo)."""
+    erros = []
+    if not dados['matricula']:
+        erros.append('Matrícula é obrigatória.')
+    elif not PADRAO_MATRICULA.match(dados['matricula']):
+        erros.append('Matrícula deve ter 8 dígitos (ex.: 24100434).')
+    if not dados['nome']:
+        erros.append('Nome é obrigatório.')
+    elif len(dados['nome']) < 3:
+        erros.append('Nome deve ter pelo menos 3 letras.')
+    if not dados['curso']:
+        erros.append('Curso é obrigatório.')
+    if dados['email'] and not PADRAO_EMAIL.match(dados['email']):
+        erros.append('E-mail inválido (ex.: nome@grad.ufsc.br).')
+    return erros
+
+
