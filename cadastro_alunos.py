@@ -135,7 +135,7 @@ def validar_dados(dados):
         erros.append('Matrícula deve ter 8 dígitos (ex.: 24100434).')
     if not dados['nome']:
         erros.append('Nome é obrigatório.')
-    elif len(dados['nome']) < 3:
+    elif sum(letra.isalpha() for letra in dados['nome']) < 3:   # conta só letras
         erros.append('Nome deve ter pelo menos 3 letras.')
     if not dados['curso']:
         erros.append('Curso é obrigatório.')
@@ -179,6 +179,7 @@ def criar_layout():
     tabela = sg.Table(values=[], headings=TITULOS, key='-TABELA-',
                       col_widths=LARGURAS, auto_size_columns=False,
                       justification='left', num_rows=12, enable_events=True,
+                      alternating_row_color='#56687E',   # linhas alternadas
                       select_mode=sg.TABLE_SELECT_MODE_BROWSE, expand_x=True)
 
     return [
