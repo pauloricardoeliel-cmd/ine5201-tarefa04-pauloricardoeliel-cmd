@@ -147,15 +147,15 @@ banco.sql: criação da tabela alunos
 
 ## Uso do GitHub Copilot
 
-<!-- PREENCHER com o que vocês realmente fizeram no VS Code. -->
+Usei o chat do GitHub Copilot no VS Code, no modo **Ask** (só perguntas, sem deixar ele alterar os arquivos). Não pedi para ele criar o sistema; selecionei funções prontas e pedi explicações ou melhorias.
 
 | Prompt | Função assistida | O que aproveitei ou mudei |
 |---|---|---|
-| "..." | | |
-| "..." | | |
-| "..." | | |
+| "Explique o que fazem o "with conexao" e os "?" nesta função" | `inserir_aluno` | Usei a explicação para entender que o `with conexao` faz `commit` ao final ou `rollback` se der erro, e que os `?` enviam os valores separados do comando SQL, prevenindo SQL injection. Não alterei o código. |
+| "Sugira melhorias para esta função de validação dos dados do aluno" | `validar_dados` | Aceitei contar só as letras do nome (`sum(letra.isalpha() ...)`), para que algo como `1 2` não passe como nome válido. Descartei usar `dados.get(...)` e limpar os textos de novo dentro da função, porque `ler_formulario` já entrega todos os campos limpos com `limpar_texto`. |
+| "Como deixar esta tabela do FreeSimpleGUI mais fácil de usar?" | `criar_layout` (tabela) | Aceitei as linhas alternadas (`alternating_row_color`), mas corrigi a cor: a sugerida (`#EAF2F8`) é quase branca e o tema usa texto claro, então as linhas ficariam ilegíveis. Usei `#56687E`, um azul mais escuro. |
 
-**Relato.** <!-- Um parágrafo: em quais funções o Copilot ajudou, uma sugestão aceita, uma corrigida ou descartada e por quê. -->
+**Relato.** O Copilot ajudou em três funções: `inserir_aluno`, `validar_dados` e `criar_layout`. Em `inserir_aluno`, a explicação deixou claro como o `with conexao` controla a transação (commit ou rollback) e por que os `?` evitam SQL injection. Aceitei a sugestão de validar o nome contando só as letras, porque antes um texto como `1 2` passava pela verificação de tamanho. Na tabela, aceitei as linhas alternadas, mas precisei corrigir a cor sugerida, que era quase branca e deixaria o texto claro do tema ilegível. Descartei refazer a limpeza dos campos dentro de `validar_dados`, porque isso já é feito em `ler_formulario`. Aprendi que as sugestões precisam ser conferidas no contexto do programa, como o tema de cores e o que outras funções já fazem.
 
 ## Tecnologias
 
