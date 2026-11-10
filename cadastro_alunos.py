@@ -144,3 +144,94 @@ def validar_dados(dados):
     return erros
 
 
+# ============================== Interface gráfica ==============================
+
+def criar_layout():
+    def campo(rotulo, chave, dica=''):
+        return [sg.Text(rotulo, size=(10, 1)),
+                sg.Input(key=chave, size=(40, 1), tooltip=dica)]
+
+    formulario = [
+        campo('Matrícula*', '-MATRICULA-', '8 dígitos, ex.: 24100434'),
+        campo('Nome*', '-NOME-'),
+        campo('Curso*', '-CURSO-'),
+        campo('E-mail', '-EMAIL-', 'Opcional, ex.: nome@grad.ufsc.br'),
+        [sg.Text('* campos obrigatórios', font=('Helvetica', 9))],
+    ]
+
+    botoes = [
+        sg.Button('Cadastrar', key='-CADASTRAR-', size=(10, 1), button_color=('white', '#27AE60')),
+        sg.Button('Editar', key='-EDITAR-', size=(10, 1), disabled=True),
+        sg.Button('Excluir', key='-EXCLUIR-', size=(10, 1), disabled=True,
+                  button_color=('white', '#C0392B')),
+        sg.Button('Limpar', key='-LIMPAR-', size=(10, 1)),
+    ]
+
+    busca = [
+        sg.Text('Buscar por nome ou matrícula:'),
+        sg.Input(key='-BUSCA-', size=(30, 1)),
+        sg.Button('Buscar', key='-BUSCAR-', size=(8, 1)),
+        sg.Button('Mostrar todos', key='-TODOS-'),
+        sg.Push(),
+        sg.Button('Exportar CSV', key='-CSV-'),
+    ]
+
+    tabela = sg.Table(values=[], headings=TITULOS, key='-TABELA-',
+                      col_widths=LARGURAS, auto_size_columns=False,
+                      justification='left', num_rows=12, enable_events=True,
+                      select_mode=sg.TABLE_SELECT_MODE_BROWSE, expand_x=True)
+
+    return [
+        [sg.Text('Cadastro de Alunos', font=('Helvetica', 20, 'bold'))],
+        [sg.Frame('Dados do aluno', formulario + [botoes])],
+        [sg.HorizontalSeparator()],
+        busca,
+        [tabela],
+        [sg.Text('', key='-TOTAL-'), sg.Push(),
+         sg.Text('', key='-STATUS-', font=('Helvetica', 11, 'bold'))],
+    ]
+
+
+def atualizar_tabela(window, alunos):
+    window['-TABELA-'].update(values=alunos)
+    window['-TOTAL-'].update(f'{len(alunos)} aluno(s) na lista')
+
+
+def mostrar_status(window, texto, cor=COR_INFO):
+    window['-STATUS-'].update(texto, text_color=cor)
+
+
+def ler_formulario(values):
+    return {
+        'matricula': limpar_texto(values['-MATRICULA-']),
+        'nome': limpar_texto(values['-NOME-']),
+        'curso': limpar_texto(values['-CURSO-']),
+        'email': limpar_texto(values['-EMAIL-']).lower(),
+    }
+
+
+def preencher_formulario(window, aluno):
+    """Carrega um aluno no formulário e entra no modo de edição."""
+    for campo in CAMPOS:
+        window[f'-{campo.upper()}-'].update(aluno[campo] or '')
+    window['-MATRICULA-'].update(disabled=True)    # chave primária não muda
+    window['-CADASTRAR-'].update(disabled=True)
+    window['-EDITAR-'].update(disabled=False)
+    window['-EXCLUIR-'].update(disabled=False)
+
+
+def limpar_formulario(window):
+    for campo in CAMPOS:
+        window[f'-{campo.upper()}-'].update('')
+    window['-MATRICULA-'].update(disabled=False)
+    window['-CADASTRAR-'].update(disabled=False)
+    window['-EDITAR-'].update(disabled=True)
+    window['-EXCLUIR-'].update(disabled=True)
+    window['-MATRICULA-'].set_focus()
+
+
+def mostrar_erros(erros):
+    sg.popup_error('Corrija os campos abaixo:\n\n' + '\n'.join(f'• {e}' for e in erros),
+                   title='Dados inválidos')
+
+
