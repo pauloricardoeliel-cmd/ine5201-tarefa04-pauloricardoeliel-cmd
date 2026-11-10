@@ -235,3 +235,123 @@ def mostrar_erros(erros):
                    title='Dados inválidos')
 
 
+# ============================== Programa principal ==============================
+
+def main():
+    sg.theme('DarkBlue3')
+
+    try:
+        conexao = criar_conexao()
+        criar_tabela(conexao)
+    except FileNotFoundError:
+        sg.popup_error(f'Script SQL não encontrado:\n{ARQUIVO_SQL}', title='Erro')
+        return
+    except sqlite3.Error as erro:
+        sg.popup_error(f'Erro ao abrir o banco de dados:\n{erro}', title='Erro')
+        return
+
+    window = sg.Window('INE5201 - Cadastro de Alunos', criar_layout(), finalize=True)
+    window['-BUSCA-'].bind('<Return>', '_ENTER')     # Enter no campo de busca
+    lista_atual = listar_todos(conexao)
+    atualizar_tabela(window, lista_atual)
+    mostrar_status(window, 'Banco carregado.')
+
+    while True:
+        event, values = window.read()
+
+        if event == sg.WIN_CLOSED:
+            break
+
+        try:
+            if event == '-CADASTRAR-':
+                dados = ler_formulario(values)
+                erros = validar_dados(dados)
+                if not erros and buscar_aluno(conexao, dados['matricula']):
+                    erros.append(f'A matrícula {dados["matricula"]} já está cadastrada.')
+                if erros:
+                    mostrar_erros(erros)
+                    mostrar_status(window, 'Cadastro não realizado.', COR_ERRO)
+                    continue
+                inserir_aluno(conexao, dados)
+                lista_atual = listar_todos(conexao)
+                atualizar_tabela(window, lista_atual)
+                limpar_formulario(window)
+                mostrar_status(window, f'Aluno {dados["nome"]} cadastrado!', COR_SUCESSO)
+
+            elif event == '-TABELA-':
+                selecionados = values['-TABELA-']
+                if selecionados:
+                    matricula = lista_atual[selecionados[0]][0]
+                    aluno = buscar_aluno(conexao, matricula)
+                    if aluno:
+                        preencher_formulario(window, aluno)
+                        mostrar_status(window, f'Editando {aluno["nome"]}.')
+
+            elif event == '-EDITAR-':
+                dados = ler_formulario(values)
+                erros = validar_dados(dados)
+                if erros:
+                    mostrar_erros(erros)
+                    continue
+                if atualizar_aluno(conexao, dados):
+                    mostrar_status(window, f'Dados de {dados["nome"]} atualizados!', COR_SUCESSO)
+                else:
+                    mostrar_status(window, 'Aluno não encontrado.', COR_ERRO)
+                lista_atual = listar_todos(conexao)
+                atualizar_tabela(window, lista_atual)
+                limpar_formulario(window)
+
+            elif event == '-EXCLUIR-':
+                dados = ler_formulario(values)
+                resposta = sg.popup_yes_no(
+                    f'Excluir {dados["nome"]} (matrícula {dados["matricula"]})?\n'
+                    'Essa ação não pode ser desfeita.', title='Confirmar exclusão')
+                if resposta == 'Yes':
+                    excluir_aluno(conexao, dados['matricula'])
+                    lista_atual = listar_todos(conexao)
+                    atualizar_tabela(window, lista_atual)
+                    limpar_formulario(window)
+                    mostrar_status(window, f'Aluno {dados["nome"]} excluído.', COR_SUCESSO)
+                else:
+                    mostrar_status(window, 'Exclusão cancelada.')
+
+            elif event in ('-BUSCAR-', '-BUSCA-_ENTER'):
+                termo = limpar_texto(values['-BUSCA-'])
+                lista_atual = pesquisar_alunos(conexao, termo) if termo else listar_todos(conexao)
+                atualizar_tabela(window, lista_atual)
+                if termo and not lista_atual:
+                    mostrar_status(window, f'Nenhum aluno encontrado para "{termo}".', COR_ERRO)
+                else:
+                    mostrar_status(window, f'{len(lista_atual)} resultado(s).')
+
+            elif event in ('-TODOS-', '-LIMPAR-'):
+                window['-BUSCA-'].update('')
+                limpar_formulario(window)
+                lista_atual = listar_todos(conexao)
+                atualizar_tabela(window, lista_atual)
+                mostrar_status(window, 'Formulário limpo.' if event == '-LIMPAR-'
+                               else 'Mostrando todos os alunos.')
+
+            elif event == '-CSV-':
+                caminho = sg.popup_get_file('Salvar lista como', save_as=True,
+                                            default_path='alunos.csv',
+                                            file_types=(('CSV', '*.csv'),),
+                                            default_extension='.csv', no_window=True)
+                if caminho:
+                    exportar_csv(lista_atual, caminho)
+                    mostrar_status(window, f'Lista exportada para {os.path.basename(caminho)}.',
+                                   COR_SUCESSO)
+
+        except sqlite3.IntegrityError:
+            mostrar_status(window, 'Matrícula já cadastrada.', COR_ERRO)
+            sg.popup_error('Essa matrícula já está cadastrada.', title='Matrícula repetida')
+        except (sqlite3.Error, OSError) as erro:
+            mostrar_status(window, 'Erro na operação.', COR_ERRO)
+            sg.popup_error(f'Não foi possível concluir a operação:\n{erro}', title='Erro')
+
+    window.close()
+    conexao.close()
+
+
+if __name__ == '__main__':
+    main()
