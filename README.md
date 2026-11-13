@@ -83,6 +83,7 @@ Os `?` são parâmetros: o `sqlite3` insere os valores com segurança, então um
 | **Exportar CSV** | Salva a lista exibida em um arquivo `.csv` que abre no Excel |
 
 Para editar ou excluir, clique em um aluno na tabela: os dados dele vão para o formulário, a matrícula fica bloqueada (é a chave primária) e os botões **Editar** e **Excluir** são liberados.
+O arquivo exportado usa ponto e vírgula como separador, o padrão do Excel em português.
 
 ## Validações
 
